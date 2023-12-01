@@ -12,9 +12,21 @@ void handleInterrupt21(int, int, int, int);
 void handleTimerInterrupt(int, int);
 void writeFile(char*, char*, int);
 
+// the process table
+int processActive[8];
+int processStackPointer[8];
+
+int currentProcess;
+
 void main() {
 	char buffer[13312];
-	int sectorsRead;
+	int sectorsRead, i;
+
+	for(i=0; i<8; i++) {
+		processActive[i] = 0;
+		processStackPointer[i] = 0xff00;
+	}
+	currentProcess = -1;
 
 	makeInterrupt21();
 	makeTimerInterrupt();
@@ -289,9 +301,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
 }
 
 void handleTimerInterrupt(int segment, int sp) {
-	printChar('T');
-	printChar('i');
-	printChar('c');
+	//printChar('T');
+	//printChar('i');
+	//printChar('c');
 
 	returnFromTimer(segment, sp);
 }
