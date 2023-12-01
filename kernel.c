@@ -9,6 +9,7 @@ void terminate();
 void writeSector(char*, int);
 void deleteFile(char*);
 void handleInterrupt21(int, int, int, int);
+void handleTimerInterrupt(int, int);
 void writeFile(char*, char*, int);
 
 void main() {
@@ -16,8 +17,8 @@ void main() {
 	int sectorsRead;
 
 	makeInterrupt21();
+	makeTimerInterrupt();
 
-	//interrupt(0x21, 8, "this is a test message", "testmg", 3);
 	printString("\r\nStarting shell. Please wait...\r\n");
 	interrupt(0x21, 4, "shell", 0, 0);
 
@@ -285,5 +286,13 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
 	} else {
 		printString("Invalid ax value.\r\n");
 	}
+}
+
+void handleTimerInterrupt(int segment, int sp) {
+	printChar('T');
+	printChar('i');
+	printChar('c');
+
+	returnFromTimer(segment, sp);
 }
 
