@@ -8,9 +8,10 @@ void executeProgram(char*);
 void terminate();
 void writeSector(char*, int);
 void deleteFile(char*);
+void writeFile(char*, char*, int);
+void killProcess(int);
 void handleInterrupt21(int, int, int, int);
 void handleTimerInterrupt(int, int);
-void writeFile(char*, char*, int);
 
 // the process table
 int processActive[8];
@@ -291,6 +292,13 @@ void writeFile(char* buffer, char* filename, int numberOfSectors) {
 	writeSector(dir, 2);
 }
 
+void killProcess(int process) {
+	int dataseg;
+	dataseg = setKernelDataSegment();
+	processActive[process] = 0;
+	restoreDataSegment(dataseg);
+}
+
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
 	if(ax==0) {
 		printString(bx);
@@ -310,6 +318,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
 		deleteFile(bx);
 	} else if(ax==8) {
 		writeFile(bx, cx, dx);
+	} else if(ax==9) {
+		killProcess(bx);
 	} else {
 		printString("Invalid ax value.\r\n");
 	}

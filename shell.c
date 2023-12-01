@@ -10,6 +10,7 @@ main() {
 	char filename[7];
 	char txtInput[512];
 	int sectorsRead,txtLength, i, j, k;
+	int process;
 	enableInterrupts();
 
 	while(1) {
@@ -98,6 +99,9 @@ main() {
 				txtLength += j;
 			}
 			syscall(8, buffer, input+7, i);
+		} else if(isCommand(input, "kill")) {
+			process = input[5] - '0'; // convert to int (only for single digit)
+			syscall(9, process);
 		} else {
 			syscall(0, "error: invalid command\r\n");
 		}
