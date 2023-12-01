@@ -31,6 +31,10 @@ bcc -ansi -c -o number.o number.c
 ld86 -d -o number number.o userlib.o
 ./loadFile number
 
+bcc -ansi -c -o letter.o letter.c
+ld86 -d -o letter letter.o userlib.o
+./loadFile letter
+
 # shell
 bcc -ansi -c -o shell.o shell.c
 ld86 -o shell -d shell.o userlib.o

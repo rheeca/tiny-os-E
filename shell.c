@@ -10,7 +10,7 @@ main() {
 	char filename[7];
 	char txtInput[512];
 	int sectorsRead,txtLength, i, j, k;
-	int process;
+	int process, processID;
 	enableInterrupts();
 
 	while(1) {
@@ -40,8 +40,11 @@ main() {
 			syscall(3, input+5, buffer, &sectorsRead);
 			if(sectorsRead<=0) syscall(0, "error: file not found\r\n");
 			else {
-				syscall(4, input+5);
+				syscall(4, input+5, &processID);
 			}
+
+			// block shell until program terminates
+			syscall(10, processID);
 		} else if(isCommand(input, "dir")) {
 			// list files in the directory
 			syscall(2, dir, 2);
