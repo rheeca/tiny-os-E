@@ -4,14 +4,15 @@
 int isCommand(char*, char*);
 
 main() {
-	while(1) {
-		char input[512];
-		char buffer[MAX_BUFFER];
-		char dir[512];
-		char filename[7];
-		char txtInput[512];
-		int sectorsRead,txtLength, i, j, k;
+	char input[512];
+	char buffer[MAX_BUFFER];
+	char dir[512];
+	char filename[7];
+	char txtInput[512];
+	int sectorsRead,txtLength, i, j, k;
+	enableInterrupts();
 
+	while(1) {
 		// clear variables
 		for(i=0; i<512; i++) {
 			input[i] = '\0';

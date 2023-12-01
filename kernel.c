@@ -20,19 +20,21 @@ int currentProcess;
 
 void main() {
 	char buffer[13312];
-	int sectorsRead, i;
+	int sectorsRead, i, dataseg;
 
+	dataseg = setKernelDataSegment();
 	for(i=0; i<8; i++) {
 		processActive[i] = 0;
 		processStackPointer[i] = 0xff00;
 	}
 	currentProcess = -1;
+	restoreDataSegment(dataseg);
 
 	makeInterrupt21();
-	makeTimerInterrupt();
 
 	printString("\r\nStarting shell. Please wait...\r\n");
 	interrupt(0x21, 4, "shell", 0, 0);
+	makeTimerInterrupt();
 
 	while(1);
 }
@@ -135,31 +137,44 @@ void executeProgram(char* name) {
 	char buffer[13312];
 	int sectorsRead, i;
 	int msgAddr = 0x0;
+	int segment, dataseg, isActive, process;
 	
 	readFile(name, buffer, &sectorsRead);
 	if(sectorsRead<=0) {
 		printString("cannot find program to execute\r\n");
 		return;
 	}
+
+	// look for free segment
+	dataseg = setKernelDataSegment();
+	for(process=0; process<8; process++) {
+		isActive = processActive[process];
+		if(!isActive) {
+			break;
+		}
+	}
+	restoreDataSegment(dataseg);
+	segment = (process+2)*0x1000;
 	
 	// transfer to memory
 	for(i=0; i<13312; i++) {
-		putInMemory(0x2000, msgAddr, buffer[i]);
+		putInMemory(segment, msgAddr, buffer[i]);
 		msgAddr += 0x1;
 	}
 
-	launchProgram(0x2000);
+	initializeProgram(segment);
+	dataseg = setKernelDataSegment();
+	processActive[process] = 1;
+	processStackPointer[process] = 0xff00;
+	restoreDataSegment(dataseg);
 }
 
 void terminate() {
-	char shellname[6];
-	shellname[0]='s';
-	shellname[1]='h';
-	shellname[2]='e';
-	shellname[3]='l';
-	shellname[4]='l';
-	shellname[5]='\0';
-	executeProgram(shellname);
+	int dataseg;
+	dataseg = setKernelDataSegment();
+	processActive[currentProcess] = 0;
+	restoreDataSegment(dataseg);
+	while(1);
 }
 
 void writeSector(char* buffer, int sector) {
@@ -301,9 +316,34 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
 }
 
 void handleTimerInterrupt(int segment, int sp) {
+	int dataseg, i;
 	//printChar('T');
 	//printChar('i');
 	//printChar('c');
+
+	dataseg = setKernelDataSegment();
+	// draw active process numbers
+	for(i=0; i<8; i++)
+        {
+                putInMemory(0xb800,60*2+i*4,i+0x30);
+                if(processActive[i]==1)
+                        putInMemory(0xb800,60*2+i*4+1,0x20);
+                else
+                        putInMemory(0xb800,60*2+i*4+1,0);
+        }
+
+	// scheduler
+	if(currentProcess > -1) {
+		processStackPointer[currentProcess] = sp;
+	}
+	while(1) {
+		currentProcess++;
+		if(currentProcess >= 8) currentProcess = 0;
+		if(processActive[currentProcess]) break;
+	}
+	segment = (currentProcess+2)*0x1000;
+	sp = processStackPointer[currentProcess];
+	restoreDataSegment(dataseg);
 
 	returnFromTimer(segment, sp);
 }

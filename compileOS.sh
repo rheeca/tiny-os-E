@@ -27,6 +27,10 @@ bcc -ansi -c -o tstpr2.o tstpr2.c
 ld86 -d -o tstpr2 tstpr2.o userlib.o
 ./loadFile tstpr2
 
+bcc -ansi -c -o number.o number.c
+ld86 -d -o number number.o userlib.o
+./loadFile number
+
 # shell
 bcc -ansi -c -o shell.o shell.c
 ld86 -o shell -d shell.o userlib.o
