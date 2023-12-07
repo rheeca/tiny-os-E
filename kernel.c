@@ -369,7 +369,7 @@ void handleTimerInterrupt(int segment, int sp) {
                 if(processActive[i]==1)
                         putInMemory(0xb800,60*2+i*4+1,0x20);
                 else if(processActive[i]==2)
-                        putInMemory(0xb800,60*2+i*4+1,0x50);
+                        putInMemory(0xb800,60*2+i*4+1,0x40);
                 else
                         putInMemory(0xb800,60*2+i*4+1,0);
         }

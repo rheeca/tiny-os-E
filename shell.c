@@ -27,7 +27,7 @@ main() {
 		syscall(0, "A:>");
 		syscall(1, input);
 
-		if(isCommand(input, "type")) {
+		if(isCommand(input, "type\0")) {
 			// print file contents
 			syscall(3, input+5, buffer, &sectorsRead);
 			if(sectorsRead<=0) syscall(0, "error: file not found\r\n");
@@ -35,8 +35,15 @@ main() {
 				syscall(0, buffer);
 				syscall(0, "\r\n");
 			}
-		} else if(isCommand(input, "exec")) {
-			// execute a program
+		} else if(isCommand(input, "execb\0")) {
+			// execute a program as a background process
+			syscall(3, input+6, buffer, &sectorsRead);
+			if(sectorsRead<=0) syscall(0, "error: file not found\r\n");
+			else {
+				syscall(4, input+6, &processID);
+			}
+		} else if(isCommand(input, "exec\0")) {
+			// execute a program and block shell until program is done
 			syscall(3, input+5, buffer, &sectorsRead);
 			if(sectorsRead<=0) syscall(0, "error: file not found\r\n");
 			else {
@@ -45,7 +52,7 @@ main() {
 
 			// block shell until program terminates
 			syscall(10, processID);
-		} else if(isCommand(input, "dir")) {
+		} else if(isCommand(input, "dir\0")) {
 			// list files in the directory
 			syscall(2, dir, 2);
 			for (i=0; i<512; i+=32) {
@@ -57,10 +64,10 @@ main() {
 				syscall(0, filename);
 				syscall(0, "\r\n");
 			}
-		} else if(isCommand(input, "del")) {
+		} else if(isCommand(input, "del\0")) {
 			// delete a file
 			syscall(7, input+4);
-		} else if(isCommand(input, "copy")) {
+		} else if(isCommand(input, "copy\0")) {
 			// copy a file
 			for(i=5; i<512; i++) {
 				if(input[i] == ' ') {
@@ -73,7 +80,7 @@ main() {
 			if(sectorsRead<=0) syscall(0, "error: file not found\r\n");
 
 			syscall(8, buffer, input+i, sectorsRead); // filename2
-		} else if(isCommand(input, "create")) {
+		} else if(isCommand(input, "create\0")) {
 			// create a text file
 			txtLength = 0;
 			for(i=0; i<26; i++) { // max file length is 26 sectors
@@ -102,7 +109,7 @@ main() {
 				txtLength += j;
 			}
 			syscall(8, buffer, input+7, i);
-		} else if(isCommand(input, "kill")) {
+		} else if(isCommand(input, "kill\0")) {
 			process = input[5] - '0'; // convert to int (only for single digit)
 			syscall(9, process);
 		} else {
@@ -112,14 +119,19 @@ main() {
 }
 
 int isCommand(char* input, char* command) {
-	while (*input != ' ' && *command != ' ' && *input != '\0' && *command != '\0'){
-		if (*input != *command) {
+	char *i, *c;
+	i = input;
+	c = command;
+	
+	while (*i != ' ' && *i != '\0' && *c != '\0'){
+		if (*i != *c) {
 			return 0;
 		}
-		input++;
-		command++;
+		i++;
+		c++;
 	}
-
-	return 1;
+	
+	if(*c == '\0') return 1;
+	else return 0;
 }
 
